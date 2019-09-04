@@ -1,3 +1,4 @@
 .git/
 env/
 __pycache__
+*.pem
