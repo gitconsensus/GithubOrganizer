@@ -19,7 +19,7 @@ def process_installs(synchronous = False):
 def update_organization_settings(org_name, synchronous = False):
     print('Configuring all repos in %s.' % (org_name))
     ghclient = get_organization_client(org_name)
-    org = gh.Organization(ghclient, organization)
+    org = gh.Organization(ghclient, org_name)
     if not org.configuration:
         print('Organization %s does not have a configuration file in %s/github' % (org_name, org_name))
         return False
