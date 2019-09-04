@@ -7,7 +7,7 @@ from githuborganizer.services.github import ghapp, get_organization_client
 def process_installs(synchronous = False):
     print('Initiating run of all installations.')
     for install_id in ghapp.get_installations():
-        click.echo('Install ID: %s' % (install_id))
+        print('Install ID: %s' % (install_id))
         install = ghapp.get_installation(install_id)
         if synchronous:
             update_organization_settings(install.get_organization())
