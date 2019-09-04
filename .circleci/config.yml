@@ -1,0 +1,65 @@
+version: 2.1
+executors:
+  docker-publisher:
+    docker:
+      - image: circleci/buildpack-deps:stretch
+
+jobs:
+
+  build:
+    executor: docker-publisher
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build github_organizer_www
+          command: |
+            docker build -t tedivm/github_organizer_www:latest -f docker/dockerfile.www . | cat
+      - run:
+          name: Build github_organizer_worker
+          command: |
+            docker build -t tedivm/github_organizer_worker:latest -f docker/dockerfile.worker . | cat
+
+
+
+  publish-latest:
+    executor: docker-publisher
+    steps:
+      - checkout
+      - setup_remote_docker
+      - run:
+          name: Build github_organizer_www docker image.
+          command: |
+            docker build -t tedivm/github_organizer_www:latest -f docker/dockerfile.www . | cat
+      - run:
+          name: Build github_organizer_worker docker image.
+          command: |
+            docker build -t tedivm/github_organizer_worker:latest -f docker/dockerfile.worker . | cat
+      - run:
+          name: Log into Docker Hub.
+          command: |
+            echo "$DOCKERHUB_PASS" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+      - run:
+          name: Publish Docker Image github_organizer_www:latest
+          command: |
+            docker push tedivm/github_organizer_www:latest | cat
+      - run:
+          name: Publish Docker Image github_organizer_worker:latest
+          command: |
+            docker push tedivm/github_organizer_worker:latest | cat
+
+
+workflows:
+  version: 2
+  build:
+    jobs:
+      - build:
+          filters:
+            branches:
+              ignore: master
+  publish:
+    jobs:
+      - publish-latest:
+          filters:
+            branches:
+              only: master
