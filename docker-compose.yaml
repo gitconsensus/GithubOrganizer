@@ -12,7 +12,7 @@ services:
       - 'CELERY_BROKER=pyamqp://guest@rabbitmq//'
       - 'DEBUG=true'
       - 'GITHUB_APP_ID=40145'
-      - 'PROCESS_INSTALLS_INTERVAL=30'
+      #- 'PROCESS_INSTALLS_INTERVAL=30'
     depends_on:
       - rabbitmq
 
@@ -28,7 +28,7 @@ services:
       - 'CELERY_BROKER=pyamqp://guest@rabbitmq//'
       - 'DEBUG=true'
       - 'GITHUB_APP_ID=40145'
-      - 'PROCESS_INSTALLS_INTERVAL=30'
+      #- 'PROCESS_INSTALLS_INTERVAL=30'
     ports:
       - "80:80"
     depends_on:
