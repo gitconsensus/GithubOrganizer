@@ -1,5 +1,8 @@
 from celery import Celery
 import os
+from beaker.cache import CacheManager
+from beaker.util import parse_cache_config_options
+
 
 SETTINGS = [
     'DEBUG',
@@ -20,3 +23,12 @@ if 'CELERY_BROKER' in CONFIG:
     celery = Celery('gitorganizer', broker=CONFIG['CELERY_BROKER'])
 else:
     celery = Celery('gitorganizer')
+
+
+cache_opts = {
+    'cache.type': 'file',
+    'cache.data_dir': '/tmp/gitorganizer/data',
+    'cache.lock_dir': '/tmp/gitorganizer/lock'
+}
+
+cache = CacheManager(**parse_cache_config_options(cache_opts))

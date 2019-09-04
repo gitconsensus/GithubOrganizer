@@ -1,6 +1,7 @@
 import base64
 import datetime
 import githuborganizer.config as config
+from githuborganizer import cache
 import github3
 from github3apps import GithubApp
 import json
@@ -9,7 +10,9 @@ import yaml
 import os
 
 DEFAULT_LABEL_COLOR = '000000'
-
+CACHE_SHORT = 5 * 60 # Five minutes
+CACHE_MEDIUM = 60 * 60 # One hour
+CACHE_LONG = 24 * 60 * 60 # One day
 
 def issue_has_projects(installation, organization, repository, issue):
     query = '''
@@ -31,21 +34,28 @@ def issue_has_projects(installation, organization, repository, issue):
     return len(results['data']['repository']['issue']['projectCards']['edges']) > 0
 
 
-
 class Organization:
 
+    def __repr__(self):
+        return 'OrganizerOrganization %s' % self.name
+
+    def __str__(self):
+        return self.__repr__()
+
     def __init__(self, client, organization):
+        @cache.cache(expire=CACHE_SHORT)
+        def get_configuration(org_name):
+            try:
+                config_repository = client.repository(org_name, '.github')
+                return yaml.safe_load(config_repository.file_contents('organizer.yaml').decoded.decode('utf-8'))
+            except:
+                return False
+
         self.client = client
         self.name = organization
-        try:
-            self.configuration = self.get_configuration()
-        except:
-            self.configuration = False
+        self.configuration = get_configuration(organization)
         self.ghorg = self.client.organization(organization)
 
-    def get_configuration(self):
-        config_repository = self.client.repository(self.name, '.github')
-        return yaml.safe_load(config_repository.file_contents('organizer.yaml').decoded.decode('utf-8'))
 
     def get_repositories(self):
         for repository in self.ghorg.repositories():
@@ -64,12 +74,13 @@ class Organization:
             yield Project(self.client, project, self)
 
     def get_project_by_name(self, name):
-        def get_project_id_from_name(org, name):
+        @cache.cache(expire=CACHE_MEDIUM)
+        def org_get_project_id_from_name(org, name):
             for project in org.ghorg.projects():
                 if project.name == name:
                     return project.id
             return False
-        id = get_project_id_from_name(self, name)
+        id = org_get_project_id_from_name(self, name)
         if not id:
             return False
         return Project(self.client, self.ghorg.project(id), self)
@@ -77,6 +88,12 @@ class Organization:
 
 
 class Repository:
+
+    def __repr__(self):
+        return 'OrganizerRepository %s' % self.name
+
+    def __str__(self):
+        return self.__repr__()
 
     def __init__(self, client, organization, repo_name, ghrep=None):
         self.client = client
@@ -163,12 +180,13 @@ class Repository:
             yield Project(self.client, project, self.organization)
 
     def get_project_by_name(self, name):
-        def get_project_id_from_name(repo, name):
+        @cache.cache(expire=CACHE_MEDIUM)
+        def repo_get_project_id_from_name(repo, name):
             for project in repo.get_projects():
                 if project.name == name:
                     return project.id
             return False
-        id = get_project_id_from_name(self, name)
+        id = repo_get_project_id_from_name(self, name)
         if not id:
             return False
         return Project(self.client, self.ghrep.project(id), self.organization)
@@ -181,6 +199,8 @@ class Repository:
         return self.ghrep.issue(issue_id)
 
     def get_autoassign_project(self):
+        if not self.organization.configuration:
+            return False
         configuration = self.organization.configuration
         if not 'issues' in configuration:
             return False
@@ -203,6 +223,12 @@ class Repository:
 
 class Project:
 
+    def __repr__(self):
+        return 'OrganizerProject %s' % self.id
+
+    def __str__(self):
+        return self.__repr__()
+
     def __init__(self, client, project, organization):
         self.client = client
         self.ghproject = project
@@ -218,6 +244,7 @@ class Project:
             yield column
 
     def get_column_by_name(self, name):
+        @cache.cache(expire=CACHE_MEDIUM)
         def get_column_id_from_name(project, name):
             for column in project.get_columns():
                 if column.name == name:
@@ -235,7 +262,3 @@ def label_matches(config_label, label):
     if label.description != config_label.get('description', None):
         return False
     return True
-
-
-def get_project(project, organization, repository=False):
-    pass

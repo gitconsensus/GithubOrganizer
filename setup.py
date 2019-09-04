@@ -40,6 +40,7 @@ setup(
   ],
 
   install_requires=[
+    'Beaker>=1.11.0,<2',
     'celery>=4.1,<5',
     'click>=7.0,<8.0',
     'cryptography>=2.1.4,<3',
