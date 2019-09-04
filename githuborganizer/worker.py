@@ -8,6 +8,6 @@ if os.environ.get('PROCESS_INSTALLS_INTERVAL', False):
     def setup_periodic_tasks(sender, **kwargs):
         print('Root Task - Schedule Installation Jobs')
         sender.add_periodic_task(
-            float(os.environ.get('PROCESS_INSTALLS_INTERVAL', 30 * 60.0)),
+            float(os.environ['PROCESS_INSTALLS_INTERVAL'] * 60.0),
             github.process_installs.s(),
             name='Root Task - Schedule Installation Jobs')

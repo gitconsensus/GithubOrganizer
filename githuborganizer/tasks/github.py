@@ -3,7 +3,7 @@ import githuborganizer.models.gh as gh
 from githuborganizer.services.github import ghapp, get_organization_client
 
 
-@celery.task
+@celery.task(rate_limit='4/h', max_retries=0)
 def process_installs(synchronous = False):
     print('Initiating run of all installations.')
     for install_id in ghapp.get_installations():
@@ -15,7 +15,7 @@ def process_installs(synchronous = False):
             update_organization_settings.delay(install.get_organization())
 
 
-@celery.task
+@celery.task(max_retries=0)
 def update_organization_settings(org_name, synchronous = False):
     print('Configuring all repos in %s.' % (org_name))
     ghclient = get_organization_client(org_name)
@@ -32,7 +32,7 @@ def update_organization_settings(org_name, synchronous = False):
             update_repository_labels.delay(org_name, repo.name)
 
 
-@celery.task
+@celery.task(max_retries=0)
 def update_repository_settings(org_name, repo_name):
     print('Updating the settings of repository %s/%s.' % (org_name, repo_name))
     ghclient = get_organization_client(org_name)
@@ -41,7 +41,7 @@ def update_repository_settings(org_name, repo_name):
     repo.update_settings()
 
 
-@celery.task
+@celery.task(max_retries=0)
 def update_repository_labels(org_name, repo_name):
     print('Updating the labels of repository %s/%s.' % (org_name, repo_name))
     ghclient = get_organization_client(org_name)
@@ -50,7 +50,7 @@ def update_repository_labels(org_name, repo_name):
     repo.update_labels()
 
 
-@celery.task
+@celery.task(default_retry_delay=65*60)
 def assign_issues(org_name, repo_name, synchronous = False):
     ghclient = get_organization_client(org_name)
     org = gh.Organization(ghclient, org_name)
@@ -65,7 +65,7 @@ def assign_issues(org_name, repo_name, synchronous = False):
             assign_issue.delay(org_name, repo_name, issue.number)
 
 
-@celery.task
+@celery.task(default_retry_delay=65*60)
 def assign_issue(org_name, repo_name, issue_number):
     installation = ghapp.get_org_installation(org_name)
     ghclient = installation.get_github3_client()
