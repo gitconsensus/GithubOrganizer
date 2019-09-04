@@ -1,0 +1,101 @@
+
+allow_squash_merge: true
+allow_merge_commit: true
+allow_rebase_merge: true
+
+has_issues: true
+has_wiki: false
+has_projects: false
+has_downloads: false
+
+
+issues:
+  project_autoassign:
+    organization: true
+    name: My Project
+    column: New Issues and Tasks
+
+
+labels_clean: true
+
+labels:
+
+  # Built in labels.
+
+  - name: bug
+    description: "Something isn't working"
+    color: d73a4a
+
+  - name: documentation
+    description: 'Improvements or additions to documentation'
+    color: 0075ca
+
+  - name: duplicate
+    description: 'This issue or pull request already exists'
+    color: cfd3d7
+
+  - name: good first issue
+    description: 'Good for newcomers'
+    color: 7057ff
+
+  - name: enhancement
+    description: 'New feature or request'
+    color: a2eeef
+
+  - name: help wanted
+    description: 'Extra attention is needed'
+    color: 008672
+
+  - name: invalid
+    description: "This doesn't seem right"
+    color: e4e669
+
+  - name: question
+    description: "Further information is requested"
+    color: d876e3
+
+  - name: wontfix
+    description: "This will not be worked on"
+    color: ffffff
+
+
+
+  # Teams/Groups
+
+  - name: ml
+    color: db5cb3
+
+  - name: infra
+    color: db5cb3
+
+  - name: dev
+    color: aaffe0
+
+  - name: it
+    color: db5cb3
+
+  # Useful labels
+
+  - name: security
+    color: db5cb3
+
+  - name: cleanup
+    color: db5cb3
+
+  - name: refactor
+    color: db5cb3
+
+  - name: reusability
+    color: db5cb3
+
+  - name: reproducibility
+    color: db5cb3
+
+  - name: monitoring
+    color: db5cb3
+
+  - name: stability
+    color: db5cb3
+
+  - name: needs discussion
+    color: 'e08155'

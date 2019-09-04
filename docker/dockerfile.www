@@ -1,0 +1,17 @@
+FROM tiangolo/uvicorn-gunicorn-fastapi:python3.7
+
+# Put first so anytime this file changes other cached layers are invalidated.
+COPY ./requirements.txt /app/requirements.txt
+COPY ./setup.py /app/setup.py
+
+# Run various pip install commands with ssh keys from host machine.
+# Note that we have to uninstall tensorflow-gpu and install the CPU version to preent CUDA errors.
+RUN pip install -r /app/requirements.txt && \
+  rm -Rf /root/.cache && rm -Rf /tmp/pip-install*
+
+
+ENV GITHUB_PRIVATE_KEY /app/github_app.private-key.pem
+
+# Finally, copy app.
+COPY ./githuborganizer /app/githuborganizer
+COPY ./githuborganizer/www.py /app/main.py

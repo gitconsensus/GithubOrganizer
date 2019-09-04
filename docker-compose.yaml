@@ -1,0 +1,38 @@
+version: "3"
+
+services:
+  worker:
+    build:
+      context: .
+      dockerfile: ./docker/dockerfile.worker
+    volumes:
+      - ./githuborganizer:/app/githuborganizer
+      - ./github_app.private-key.pem:/app/github_app.private-key.pem
+    environment:
+      - 'CELERY_BROKER=pyamqp://guest@rabbitmq//'
+      - 'DEBUG=true'
+      - 'GITHUB_APP_ID=40145'
+      - 'PROCESS_INSTALLS_INTERVAL=30'
+    depends_on:
+      - rabbitmq
+
+  www:
+    build:
+      context: .
+      dockerfile: ./docker/dockerfile.www
+    volumes:
+      - ./githuborganizer:/app/githuborganizer
+      - ./githuborganizer/www.py:/app/main.py
+      - ./github_app.private-key.pem:/app/github_app.private-key.pem
+    environment:
+      - 'CELERY_BROKER=pyamqp://guest@rabbitmq//'
+      - 'DEBUG=true'
+      - 'GITHUB_APP_ID=40145'
+      - 'PROCESS_INSTALLS_INTERVAL=30'
+    ports:
+      - "80:80"
+    depends_on:
+      - rabbitmq
+
+  rabbitmq:
+    image: rabbitmq

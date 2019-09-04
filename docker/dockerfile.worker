@@ -1,0 +1,20 @@
+FROM python:3.6
+
+ADD requirements.txt /app/requirements.txt
+ADD ./setup.py /app/setup.py
+WORKDIR /app/
+
+RUN pip install -r requirements.txt && \
+  rm -Rf /root/.cache && rm -Rf /tmp/pip-install*
+
+ENV GITHUB_PRIVATE_KEY /app/github_app.private-key.pem
+
+ADD ./githuborganizer/ /app/githuborganizer
+ADD ./setup.py /app/setup.py
+
+RUN useradd -ms /bin/bash githuborganizer
+USER githuborganizer
+
+ADD ./docker/start_worker.sh /app/start_worker.sh
+
+ENTRYPOINT /app/start_worker.sh
