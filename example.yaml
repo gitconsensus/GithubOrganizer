@@ -9,6 +9,11 @@ has_projects: false
 has_downloads: false
 
 
+dependency_security:
+  alerts: true
+  automatic_fixes: true
+
+
 issues:
   project_autoassign:
     organization: true

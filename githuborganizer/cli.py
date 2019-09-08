@@ -1,7 +1,7 @@
 import click
 import github3
-import githuborganizer.models.gh
-import githuborganizer.tasks.github
+import models.gh
+import tasks.github
 from githuborganizer.services.github import ghapp, get_organization_client
 import random
 import string
@@ -48,6 +48,7 @@ def settings(organization):
 def update_repo(organization, repository):
     tasks.github.update_repository_settings(organization, repository)
     tasks.github.update_repository_labels(organization, repository)
+    tasks.github.update_repository_security_settings(organization, repository)
 
 
 @cli.command(short_help="Update all repositories in an organization")

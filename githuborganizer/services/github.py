@@ -22,6 +22,11 @@ class GithubOrganizerApp(GithubApp):
 
 class GithubOrganizerAppInstall(GithubAppInstall):
 
+    def get_github3_client(self):
+        client = super().get_github3_client()
+        client.app = self
+        return client
+
     def get_organization(self):
         url = 'https://api.github.com/installation/repositories'
         res = self.request(url)
@@ -37,6 +42,26 @@ class GithubOrganizerAppInstall(GithubAppInstall):
         r.raise_for_status()
         return r.json()
 
+    def rest(self, verb, endpoint, payload=False, accepts=False):
+        accepts_all = ['application/json', 'application/vnd.github.v3+json']
+        if accepts:
+            if isinstance(accepts, str):
+                accepts_all.append(accepts)
+            else:
+                accepts_all += accepts
+        url = 'https://api.github.com/%s' % endpoint
+        headers = {
+            'Authorization': 'token %s' % self.get_auth_token(),
+            'Accept': ', '.join(accepts_all)
+            }
+        if payload:
+            r = requests.request(verb, url, headers=headers, json=payload)
+        else:
+            r = requests.request(verb, url, headers=headers)
+        r.raise_for_status()
+        if len(r.content) <= 0:
+            return True
+        return r.json()
 
 
 ghapp = GithubOrganizerApp(os.environ['GITHUB_APP_ID'], os.environ['GITHUB_PRIVATE_KEY'])

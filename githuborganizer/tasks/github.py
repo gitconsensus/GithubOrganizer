@@ -26,10 +26,16 @@ def update_organization_settings(org_name, synchronous = False):
     for repo in org.get_repositories():
         if synchronous:
             update_repository_settings(org_name, repo.name)
-            update_repository_labels(org_name, repo.name)
+            if 'labels' in org.configuration:
+                update_repository_labels(org_name, repo.name)
+            if 'dependency_security' in org.configuration:
+                update_repository_security_settings(org_name, repo.name)
         else:
             update_repository_settings.delay(org_name, repo.name)
-            update_repository_labels.delay(org_name, repo.name)
+            if 'labels' in org.configuration:
+                update_repository_labels.delay(org_name, repo.name)
+            if 'dependency_security' in org.configuration:
+                update_repository_security_settings.delay(org_name, repo.name)
 
 
 @celery.task(max_retries=0)
@@ -39,6 +45,15 @@ def update_repository_settings(org_name, repo_name):
     org = gh.Organization(ghclient, org_name)
     repo = org.get_repository(repo_name)
     repo.update_settings()
+
+
+@celery.task(max_retries=0)
+def update_repository_security_settings(org_name, repo_name):
+    print('Updating the dependency security settings of repository %s/%s.' % (org_name, repo_name))
+    ghclient = get_organization_client(org_name)
+    org = gh.Organization(ghclient, org_name)
+    repo = org.get_repository(repo_name)
+    repo.update_security_scanning()
 
 
 @celery.task(max_retries=0)

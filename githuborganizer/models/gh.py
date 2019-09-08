@@ -56,7 +56,6 @@ class Organization:
         self.configuration = get_configuration(organization)
         self.ghorg = self.client.organization(organization)
 
-
     def get_repositories(self):
         for repository in self.ghorg.repositories():
             if 'exclude_repositories' in self.configuration:
@@ -157,14 +156,14 @@ class Repository:
                     config_label.get('description', None))
 
     def update_issues(self):
-
+        if not self.organization.configuration:
+            return False
         if not self.organization.configuration.get('issues', False):
             return False
         if not self.organization.configuration['issues'].get('auto_assign_project', False):
             return False
 
         issue_config = self.organization.configuration['issues']
-
 
         if 'organization' in issue_config:
             project = self.organization.ghorg.project(self.organization.configuration['issues']['name'])
@@ -174,6 +173,29 @@ class Repository:
 
         for issue in self.ghrep.issues(state='open', sort='created', direction='asc'):
             project_column.create_card_with_issue(issue)
+
+    def update_security_scanning(self):
+        if not self.organization.configuration:
+            return False
+        if not self.organization.configuration.get('dependency_security', False):
+            return False
+        sec = self.organization.configuration['dependency_security']
+        if 'alerts' in sec:
+            self.toggle_vulnerability_alerts(sec['alerts'])
+        if 'automatic_fixes' in sec:
+            self.toggle_security_fixes(sec['automatic_fixes'])
+
+    def toggle_vulnerability_alerts(self, enable):
+        flag = 'application/vnd.github.dorian-preview+json'
+        endpoint = 'repos/%s/%s/vulnerability-alerts' % (self.organization.name, self.name)
+        verb = 'PUT' if enable else 'DELETE'
+        return self.client.app.rest(verb, endpoint, accepts=flag)
+
+    def toggle_security_fixes(self, enable):
+        flag = 'application/vnd.github.london-preview+json'
+        endpoint = 'repos/%s/%s/automated-security-fixes' % (self.organization.name, self.name)
+        verb = 'PUT' if enable else 'DELETE'
+        return self.client.app.rest(verb, endpoint, accepts=flag)
 
     def get_projects(self):
         for project in self.ghrep.projects():
