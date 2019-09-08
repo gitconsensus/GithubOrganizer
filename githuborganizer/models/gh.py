@@ -61,6 +61,8 @@ class Organization:
             if 'exclude_repositories' in self.configuration:
                 if repository.name in self.configuration['exclude_repositories']:
                     continue
+            if self.configuration.get('exclude_forks', False) and repository.fork:
+                continue
             if repository.archived:
                 continue
             yield Repository(self.client, self, repository.name, repository)
