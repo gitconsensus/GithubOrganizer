@@ -102,11 +102,16 @@ class Repository:
         self.client = client
         self.organization = organization
         self.name = repo_name
-
+        self._ghrep = False
         if ghrep:
-            self.ghrep = ghrep
-        else:
-            self.ghrep = self.client.repository(self.organization.name, self.name)
+            self._ghrep = ghrep
+
+    @property
+    def ghrep(self):
+        '''Lazy loading the client to reduce API calls when we don't actually need them.'''
+        if not self._ghrep:
+            self._ghrep = self.client.repository(self.organization.name, self.name)
+        return self._ghrep
 
     def update_settings(self):
         organizer_settings = self.get_organizer_settings()
