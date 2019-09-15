@@ -34,12 +34,17 @@ def auth():
         fd.write(auth.token + '\n')
 
 
-@cli.command(short_help="List the settings for an organization")
+@cli.command(short_help="List the settings for an organization or repository")
 @click.argument('organization')
-def settings(organization):
+@click.argument('repository', default=False)
+def settings(organization, repository):
     gh = get_organization_client(organization)
     org = models.gh.Organization(gh, organization)
-    click.echo(org.configuration)
+    if repository:
+        repo = org.get_repository(repository)
+        click.echo(repo.get_organizer_settings())
+    else:
+        click.echo(org.configuration)
 
 
 @cli.command(short_help="Update a single repository's settings")

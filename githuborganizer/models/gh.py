@@ -8,6 +8,8 @@ import json
 import requests
 import yaml
 import os
+from copy import copy
+
 
 DEFAULT_LABEL_COLOR = '000000'
 CACHE_SHORT = 5 * 60 # Five minutes
@@ -107,14 +109,15 @@ class Repository:
             self.ghrep = self.client.repository(self.organization.name, self.name)
 
     def update_settings(self):
+        organizer_settings = self.get_organizer_settings()
         self.ghrep.edit(self.name,
-            has_issues = self.organization.configuration.get('has_issues', None),
-            has_wiki = self.organization.configuration.get('has_wiki', None),
-            has_downloads = self.organization.configuration.get('has_downloads', None),
-            has_projects = self.organization.configuration.get('has_projects', None),
-            allow_rebase_merge = self.organization.configuration.get('allow_rebase_merge', None),
-            allow_squash_merge = self.organization.configuration.get('allow_squash_merge', None),
-            allow_merge_commit = self.organization.configuration.get('allow_merge_commit', None),
+            has_issues = organizer_settings.get('features', {}).get('has_issues', None),
+            has_wiki = organizer_settings.get('features', {}).get('has_wiki', None),
+            has_downloads = organizer_settings.get('features', {}).get('has_downloads', None),
+            has_projects = organizer_settings.get('features', {}).get('has_projects', None),
+            allow_rebase_merge = organizer_settings.get('merges', {}).get('allow_rebase_merge', None),
+            allow_squash_merge = organizer_settings.get('merges', {}).get('allow_squash_merge', None),
+            allow_merge_commit = organizer_settings.get('merges', {}).get('allow_merge_commit', None),
         )
 
     def get_labels(self):
@@ -123,12 +126,48 @@ class Repository:
             labels[label.name] = label
         return labels
 
+    def get_organizer_settings(self, name = False, maxdepth = 5):
+        if not self.organization.configuration:
+            return False
+        elif 'repositories' not in self.organization.configuration:
+            '''Convert from the old style configuration to the current version'''
+            settings = copy(self.organization.configuration)
+            settings['merges'] = {}
+            settings['features'] = {}
+            if 'labels' in settings:
+                del settings['labels']
+            for feature in ['has_issues', 'has_wiki', 'has_downloads', 'has_projects']:
+                if feature in settings:
+                    settings['features'][feature] = settings[feature]
+                    del settings[feature]
+            for merge in ['allow_rebase_merge', 'allow_squash_merge', 'allow_merge_commit']:
+                if merge in settings:
+                    settings['merges'][merge] = settings[merge]
+                    del settings[merge]
+            return settings
+        elif name and name in self.organization.configuration['repositories']:
+            settings = self.organization.configuration['repositories'][name]
+        elif self.name in self.organization.configuration['repositories']:
+            settings = self.organization.configuration['repositories'][self.name]
+        elif 'default' in self.organization.configuration['repositories']:
+            settings = self.organization.configuration['repositories']['default']
+        if not settings:
+            return False
+        if 'extends' in settings and maxdepth > 0:
+            parent = self.get_organizer_settings(name=settings['extends'], maxdepth=maxdepth-1)
+            if parent:
+                parent.update(settings)
+                settings = parent
+            del settings['extends']
+
+        return settings
+
     def update_labels(self):
 
         current_labels = self.get_labels() #[x.name for x in self.ghrep.labels()]
 
         # Remove any labels not in the configuration
-        if self.organization.configuration.get('labels_clean', False):
+        if 'labels_clean' in self.organization.configuration:
             label_names = [x['name'] for x in self.organization.configuration.get('labels', [])]
             for active_label in self.ghrep.labels():
                 if active_label.name not in label_names:
@@ -158,30 +197,30 @@ class Repository:
                     config_label.get('description', None))
 
     def update_issues(self):
-        if not self.organization.configuration:
+        organizer_settings = self.get_organizer_settings()
+        if not organizer_settings:
             return False
-        if not self.organization.configuration.get('issues', False):
-            return False
-        if not self.organization.configuration['issues'].get('auto_assign_project', False):
+        if 'auto_assign_project' not in organizer_settings['issues']:
             return False
 
-        issue_config = self.organization.configuration['issues']
+        issue_config = organizer_settings['issues']
 
         if 'organization' in issue_config:
-            project = self.organization.ghorg.project(self.organization.configuration['issues']['name'])
+            project = self.organization.ghorg.project(issue_config['name'])
         else:
-            project = self.ghrep.project(self.organization.configuration['issues']['name'])
-        project_column = project.column(self.organization.configuration['issues']['column'])
+            project = self.ghrep.project(issue_config['name'])
+        project_column = project.column(issue_config['column'])
 
         for issue in self.ghrep.issues(state='open', sort='created', direction='asc'):
             project_column.create_card_with_issue(issue)
 
     def update_security_scanning(self):
-        if not self.organization.configuration:
+        organizer_settings = self.get_organizer_settings()
+        if not organizer_settings:
             return False
-        if not self.organization.configuration.get('dependency_security', False):
+        if 'dependency_security' not in organizer_settings:
             return False
-        sec = self.organization.configuration['dependency_security']
+        sec = organizer_settings['dependency_security']
         if 'alerts' in sec:
             self.toggle_vulnerability_alerts(sec['alerts'])
         if 'automatic_fixes' in sec:
@@ -223,14 +262,14 @@ class Repository:
         return self.ghrep.issue(issue_id)
 
     def get_autoassign_project(self):
-        if not self.organization.configuration:
+        organizer_settings = self.get_organizer_settings()
+        if not organizer_settings:
             return False
-        configuration = self.organization.configuration
-        if not 'issues' in configuration:
+        if not 'issues' in organizer_settings:
             return False
-        if not 'project_autoassign' in configuration['issues']:
+        if not 'project_autoassign' in organizer_settings['issues']:
             return False
-        autoassign = configuration['issues']['project_autoassign']
+        autoassign = organizer_settings['issues']['project_autoassign']
         if autoassign['organization']:
             return self.organization.get_project_by_name(autoassign['name'])
         if autoassign['repository']:
@@ -238,11 +277,11 @@ class Repository:
         return self.get_project_by_name(autoassign['name'])
 
     def get_autoassign_column(self):
-        configuration = self.organization.configuration
+        organizer_settings = self.get_organizer_settings()
         project = self.get_autoassign_project()
         if not project:
             return False
-        return project.get_column_by_name(configuration['issues']['project_autoassign']['column'])
+        return project.get_column_by_name(organizer_settings['issues']['project_autoassign']['column'])
 
 
 class Project:

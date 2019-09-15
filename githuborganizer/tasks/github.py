@@ -24,17 +24,18 @@ def update_organization_settings(org_name, synchronous = False):
         print('Organization %s does not have a configuration file in %s/github' % (org_name, org_name))
         return False
     for repo in org.get_repositories():
+        organizer_settings = repo.get_organizer_settings()
         if synchronous:
             update_repository_settings(org_name, repo.name)
             if 'labels' in org.configuration:
                 update_repository_labels(org_name, repo.name)
-            if 'dependency_security' in org.configuration:
+            if 'dependency_security' in organizer_settings:
                 update_repository_security_settings(org_name, repo.name)
         else:
             update_repository_settings.delay(org_name, repo.name)
             if 'labels' in org.configuration:
                 update_repository_labels.delay(org_name, repo.name)
-            if 'dependency_security' in org.configuration:
+            if 'dependency_security' in organizer_settings:
                 update_repository_security_settings.delay(org_name, repo.name)
 
 
