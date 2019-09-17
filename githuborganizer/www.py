@@ -41,6 +41,7 @@ def issue_payload(payload):
     repository = payload['repository']['name']
     organization = payload['repository']['full_name'].split('/')[0]
     tasks.assign_issue.delay(organization, repository, issue_number)
+    tasks.label_issue.delay(organization, repository, issue_number)
     return 'Processing issue #%s on %s/%s.' % (issue_number, organization, repository)
 
 

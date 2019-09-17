@@ -123,6 +123,14 @@ def assign_issue(organization, repository, issue):
 
 
 @cli.command(short_help="")
+@click.argument('organization')
+@click.argument('repository')
+@click.argument('issue')
+def label_issue(organization, repository, issue):
+    tasks.github.label_issue(organization, repository, issue)
+
+
+@cli.command(short_help="")
 def app_info():
     for install_id in ghapp.get_installations():
         click.echo('Install ID: %s' % (install_id))

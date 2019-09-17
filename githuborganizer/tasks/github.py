@@ -98,3 +98,17 @@ def assign_issue(org_name, repo_name, issue_number):
     issue = repo.get_issue(issue_number)
     if not column.create_card_with_issue(issue):
         print('Unable to assign issue %s to column %s' % (issue_number, column.name))
+
+
+@celery.task(default_retry_delay=65*60)
+def label_issue(org_name, repo_name, issue_number):
+    installation = ghapp.get_org_installation(org_name)
+    ghclient = installation.get_github3_client()
+    org = gh.Organization(ghclient, org_name)
+    repo = org.get_repository(repo_name)
+    autoassign_labels = repo.get_autoassign_labels()
+    if not autoassign_labels:
+        return
+    issue = repo.get_issue(issue_number)
+    for label in autoassign_labels:
+        issue.add_labels(label)

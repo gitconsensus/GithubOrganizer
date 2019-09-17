@@ -288,6 +288,20 @@ class Repository:
             return False
         return project.get_column_by_name(organizer_settings['issues']['project_autoassign']['column'])
 
+    def get_autoassign_labels(self):
+        organizer_settings = self.get_organizer_settings()
+        if 'issues' in organizer_settings and 'auto_label' in organizer_settings['issues']:
+            labels = set(organizer_settings['issues']['auto_label'])
+        else:
+            labels = set([])
+        if 'labels' in self.organization.configuration:
+            for label in self.organization.configuration['labels']:
+                if 'repos' in label and self.name in label['repos']:
+                    labels.add(label['name'])
+        if len(labels) > 0:
+            return labels
+        return False
+
 
 class Project:
 
