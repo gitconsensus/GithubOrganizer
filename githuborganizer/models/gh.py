@@ -36,6 +36,23 @@ def issue_has_projects(installation, organization, repository, issue):
     return len(results['data']['repository']['issue']['projectCards']['edges']) > 0
 
 
+def team_has_repositories(installation, team):
+    # GET /teams/:team_id/repos
+    results = installation.rest(
+        'get',
+        'teams/%s/repos' % (team.id),
+        payload=False,
+        accepts=['application/vnd.github.hellcat-preview+json']
+    )
+    repositories = {}
+    for repo in results:
+        repositories[repo['name']] = []
+        for permission in repo['permissions']:
+            if repo['permissions'][permission]:
+                repositories[repo['name']].append(permission)
+    return repositories
+
+
 class Organization:
 
     def __repr__(self):
@@ -56,7 +73,16 @@ class Organization:
         self.client = client
         self.name = organization
         self.configuration = get_configuration(organization)
-        self.ghorg = self.client.organization(organization)
+        self._ghorg = False
+
+
+    @property
+    def ghorg(self):
+        '''Lazy loading the client to reduce API calls when we don't actually need them.'''
+        if not self._ghorg:
+            self._ghorg = self.client.organization(self.name)
+        return self._ghorg
+
 
     def get_repositories(self):
         for repository in self.ghorg.repositories():
@@ -87,6 +113,20 @@ class Organization:
         if not id:
             return False
         return Project(self.client, self.ghorg.project(id), self)
+
+    def get_team_by_name(self, name):
+        @cache.cache(expire=CACHE_MEDIUM)
+        def org_get_team_id_from_name(org, name):
+            accepts = ['application/vnd.github.hellcat-preview+json']
+            endpoint = 'orgs/%s/teams/%s' % (org.name, name)
+            results = self.client.app.rest('get', endpoint, accepts=accepts)
+            if not results:
+                return False
+            return results['id']
+        id = org_get_team_id_from_name(self, name.replace(' ', '-'))
+        if not id:
+            return False
+        return self.ghorg.team(id)
 
 
 

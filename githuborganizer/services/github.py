@@ -19,7 +19,6 @@ class GithubOrganizerApp(GithubApp):
         return self.get_installation(res['id'])
 
 
-
 class GithubOrganizerAppInstall(GithubAppInstall):
 
     def get_github3_client(self):
@@ -42,14 +41,15 @@ class GithubOrganizerAppInstall(GithubAppInstall):
         r.raise_for_status()
         return r.json()
 
-    def rest(self, verb, endpoint, payload=False, accepts=False):
+    def rest(self, verb, endpoint=False, payload=False, accepts=False, url=False):
         accepts_all = ['application/json', 'application/vnd.github.v3+json']
         if accepts:
             if isinstance(accepts, str):
                 accepts_all.append(accepts)
             else:
                 accepts_all += accepts
-        url = 'https://api.github.com/%s' % endpoint
+        if not url:
+            url = 'https://api.github.com/%s' % endpoint
         headers = {
             'Authorization': 'token %s' % self.get_auth_token(),
             'Accept': ', '.join(accepts_all)
@@ -61,7 +61,29 @@ class GithubOrganizerAppInstall(GithubAppInstall):
         r.raise_for_status()
         if len(r.content) <= 0:
             return True
+
+        next = get_next(r)
+        if next:
+            results = r.json()
+            results.append(self.rest('get', url=url, accepts=accepts))
+            return results
+
         return r.json()
+
+
+def get_next(r):
+    link = r.headers.get('link', False)
+    if not link:
+        return False
+
+    # Should be a comma separated string of links
+    links = link.split(',')
+
+    for link in links:
+        # If there is a 'next' link return the URL between the angle brackets, or None
+        if 'rel="next"' in link:
+            return link[link.find("<")+1:link.find(">")]
+    return False
 
 
 ghapp = GithubOrganizerApp(os.environ['GITHUB_APP_ID'], os.environ['GITHUB_PRIVATE_KEY'])

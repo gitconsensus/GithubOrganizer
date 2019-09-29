@@ -62,6 +62,23 @@ def update_repos(organization):
     tasks.github.update_organization_settings(organization, True)
 
 
+@cli.command(short_help="Update repository teams for an organization")
+@click.argument('organization')
+def update_team_repos(organization):
+    tasks.github.update_organization_teams(organization)
+
+
+@cli.command(short_help="Update repository teams for an organization")
+@click.argument('organization')
+@click.argument('team')
+def get_team_permissions(organization, team):
+    installation = ghapp.get_org_installation(organization)
+    gh = get_organization_client(organization)
+    org = models.gh.Organization(gh, organization)
+    team = org.get_team_by_name(team)
+    click.echo(models.gh.team_has_repositories(installation, team))
+
+
 @cli.command(short_help="List the repositories in an organization")
 @click.argument('organization')
 def list_repos(organization):

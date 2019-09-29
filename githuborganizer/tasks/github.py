@@ -9,10 +9,13 @@ def process_installs(synchronous = False):
     for install_id in ghapp.get_installations():
         print('Install ID: %s' % (install_id))
         install = ghapp.get_installation(install_id)
+        organization = install.get_organization()
         if synchronous:
-            update_organization_settings(install.get_organization())
+            update_organization_settings(organization)
+            update_organization_teams(organization)
         else:
-            update_organization_settings.delay(install.get_organization())
+            update_organization_settings.delay(organization)
+            update_organization_teams.delay(organization)
 
 
 @celery.task(max_retries=0)
@@ -64,6 +67,33 @@ def update_repository_labels(org_name, repo_name):
     org = gh.Organization(ghclient, org_name)
     repo = org.get_repository(repo_name)
     repo.update_labels()
+
+
+@celery.task(max_retries=0)
+def update_organization_teams(org_name):
+    ghclient = get_organization_client(org_name)
+    org = gh.Organization(ghclient, org_name)
+    repositories = [x for x in org.get_repositories()]
+    for ghteam in org.ghorg.teams():
+        repo_permissions = gh.team_has_repositories(org.client.app, ghteam)
+        for repository in repositories:
+            repo_config = repository.get_organizer_settings()
+            current = repo_permissions.get(repository.name, [])
+            repo_full_name = '%s/%s' % (org.name, repository.name)
+            if 'teams' in repo_config and ghteam.name in repo_config['teams']:
+                permission = repo_config['teams'][ghteam.name]
+                if permission not in current:
+                    print('Team %s adding %s permission on %s.' % (ghteam.name, permission, repo_full_name))
+                    ghteam.add_repository(repo_full_name, permission)
+                elif permission == 'pull' and len(current) > 1:
+                    print('Team %s setting %s permission on %s.' % (ghteam.name, permission, repo_full_name))
+                    ghteam.add_repository(repo_full_name, permission)
+                elif permission == 'push' and len(current) > 2:
+                    print('Team %s setting %s permission on %s.' % (ghteam.name, permission, repo_full_name))
+                    ghteam.add_repository(repo_full_name, permission)
+            elif repo_config.get('teams_clean', False) and len(current) > 0:
+                print('Team %s removing %s permissions on %s.' % (ghteam.name, ', '.join(current), repo_full_name))
+                ghteam.remove_repository(repo_full_name)
 
 
 @celery.task(default_retry_delay=65*60)

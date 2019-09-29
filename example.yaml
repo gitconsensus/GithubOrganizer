@@ -1,24 +1,36 @@
 
-allow_squash_merge: true
-allow_merge_commit: true
-allow_rebase_merge: true
 
-has_issues: true
-has_wiki: false
-has_projects: false
-has_downloads: false
+repositories:
+  default:
+    teams:
+      TestTeam: Pull # Pull, Push, Admin
+    issues:
+      auto_label:
+        - dev
+      project_autoassign:
+        organization: true
+        name: TestProject
+        column: To do
+    dependency_security:
+      alerts: true
+      automatic_fixes: true
+    merges:
+      allow_squash_merge: true
+      allow_merge_commit: true
+      allow_rebase_merge: true
+    features:
+      has_issues: true
+      has_wiki: false
+      has_projects: false
+      has_downloads: false
+    protections:
+      master:
+        enforce_admins: true
+        required_pull_request_reviews: true
+      prod:
+        enforce_admins: true
+        required_pull_request_reviews: true
 
-
-dependency_security:
-  alerts: true
-  automatic_fixes: true
-
-
-issues:
-  project_autoassign:
-    organization: true
-    name: My Project
-    column: New Issues and Tasks
 
 
 labels_clean: true
