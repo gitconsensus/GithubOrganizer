@@ -198,6 +198,10 @@ class Repository:
             settings = self.organization.configuration['repositories']['default']
         if not settings:
             return False
+
+        if isinstance(settings, str):
+            settings = {'extends':settings}
+
         if 'extends' in settings and maxdepth > 0:
             parent = self.get_organizer_settings(name=settings['extends'], maxdepth=maxdepth-1)
             if parent:
