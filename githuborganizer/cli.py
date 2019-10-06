@@ -155,6 +155,19 @@ def label_issue(organization, repository, issue):
 
 
 @cli.command(short_help="")
+@click.argument('organization')
+@click.argument('team')
+def update_team_membership(organization, team):
+    tasks.github.update_team_members(organization, team)
+
+
+@cli.command(short_help="")
+@click.argument('organization')
+def update_org_team_membership(organization):
+    tasks.github.update_organization_team_members(organization, synchronous=True)
+
+
+@cli.command(short_help="")
 def app_info():
     for install_id in ghapp.get_installations():
         click.echo('Install ID: %s' % (install_id))

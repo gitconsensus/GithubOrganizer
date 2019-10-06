@@ -185,3 +185,49 @@ def label_issue(org_name, repo_name, issue_number):
     issue = repo.get_issue(issue_number)
     for label in autoassign_labels:
         issue.add_labels(label)
+
+
+@celery.task(max_retries=0)
+def update_organization_team_members(org_name, synchronous = False):
+    installation = ghapp.get_org_installation(org_name)
+    ghclient = installation.get_github3_client()
+    org = gh.Organization(ghclient, org_name)
+    if not org.configuration:
+        print('Organization %s does not have a configurations.' % (org_name))
+        return
+    if not 'teams' in org.configuration:
+        return
+    for team in org.configuration['teams']:
+        if synchronous:
+            update_team_members(org_name, team)
+        else:
+            update_team_members.delay(org_name, team)
+
+
+@celery.task(max_retries=0)
+def update_team_members(org_name, team_name):
+    installation = ghapp.get_org_installation(org_name)
+    ghclient = installation.get_github3_client()
+    org = gh.Organization(ghclient, org_name)
+    if not 'teams' in org.configuration:
+        return
+    if not team_name in org.configuration['teams']:
+        return
+    settings = org.configuration['teams'][team_name]
+    if not 'members' in settings:
+        return
+    try:
+        team = org.get_team_by_name(team_name)
+    except:
+        print('Creating team %s in organization %s' % (team_name, org_name))
+        team = org.ghorg.create_team(team_name)
+    existing = []
+    for member in team.members():
+        existing.append(member.login)
+        if member.login not in settings['members']:
+            print('Removing %s from team "%s" in organization "%s"' % (member.login, team_name, org_name))
+            team.revoke_membership(member.login)
+    for member in settings['members']:
+        if member not in existing:
+            print('Adding %s to team "%s" in organization "%s"' % (member, team_name, org_name))
+            team.add_or_update_membership(member)
