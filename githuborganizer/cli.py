@@ -134,6 +134,13 @@ def get_repo_project(organization, repository, project):
 @cli.command(short_help="")
 @click.argument('organization')
 @click.argument('repository')
+def update_branch_protection(organization, repository):
+    tasks.github.update_repo_branch_protection(organization, repository, synchronous=True)
+
+
+@cli.command(short_help="")
+@click.argument('organization')
+@click.argument('repository')
 @click.argument('issue')
 def assign_issue(organization, repository, issue):
     tasks.github.assign_issue(organization, repository, issue)

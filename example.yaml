@@ -23,7 +23,7 @@ repositories:
       has_wiki: false
       has_projects: false
       has_downloads: false
-    protections:
+    branches:
       master:
         enforce_admins: true
         required_pull_request_reviews: true

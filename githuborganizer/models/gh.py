@@ -53,6 +53,62 @@ def team_has_repositories(installation, team):
     return repositories
 
 
+def branch_protection(
+    installation,
+    repository,
+    branch,
+    required_status_checks = None,
+    enforce_admins = False,
+    required_pull_request_reviews = None,
+    restrictions = None):
+
+    # required_status_checks
+    # - strict - boolean
+    # - contexts - array, leave empty for "all"
+    if required_status_checks:
+        if 'contexts' not in required_status_checks:
+            required_status_checks['contexts'] = []
+        if 'strict' not in required_status_checks:
+            required_status_checks['strict'] = False
+
+    # enforce_admins - boolean
+    enforce_admins = bool(enforce_admins)
+
+    # required_pull_request_reviews
+    # - dismissal_restrictions - object (optional)
+    #   - users - array
+    #   - teams - array
+    # - dismiss_stale_reviews - boolean
+    # - require_code_owner_reviews - boolean
+    # - required_approving_review_count - integer
+    if required_status_checks:
+        if 'require_review' in required_status_checks:
+            del required_status_checks['require_review']
+            if 'required_approving_review_count' not in required_status_checks:
+                required_status_checks['required_approving_review_count'] = 1
+
+    # restrictions
+    # - users - array
+    # - teams - array
+    # - apps - array
+    if restrictions:
+        for field in ['users', 'teams', 'apps']:
+            if field not in restrictions:
+                restrictions[field] = []
+
+    results = installation.rest(
+        'put',
+        'repos/%s/%s/branches/%s/protection' % (repository.organization.name, repository.name, branch),
+        payload={
+            'required_status_checks': required_status_checks,
+            'enforce_admins': enforce_admins,
+            'required_pull_request_reviews': required_pull_request_reviews,
+            'restrictions': restrictions
+        },
+        accepts=['application/vnd.github.luke-cage-preview+json']
+    )
+
+
 class Organization:
 
     def __repr__(self):

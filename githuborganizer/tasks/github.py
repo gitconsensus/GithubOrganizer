@@ -34,12 +34,16 @@ def update_organization_settings(org_name, synchronous = False):
                 update_repository_labels(org_name, repo.name)
             if 'dependency_security' in organizer_settings:
                 update_repository_security_settings(org_name, repo.name)
+            if 'branches' in organizer_settings:
+                update_repo_branch_protection(org_name, repo.name, synchronous=True)
         else:
             update_repository_settings.delay(org_name, repo.name)
             if 'labels' in org.configuration:
                 update_repository_labels.delay(org_name, repo.name)
             if 'dependency_security' in organizer_settings:
                 update_repository_security_settings.delay(org_name, repo.name)
+            if 'branches' in organizer_settings:
+                update_repo_branch_protection.delay(org_name, repo.name)
 
 
 @celery.task(max_retries=0)
@@ -58,6 +62,45 @@ def update_repository_security_settings(org_name, repo_name):
     org = gh.Organization(ghclient, org_name)
     repo = org.get_repository(repo_name)
     repo.update_security_scanning()
+
+
+@celery.task(max_retries=0)
+def update_repo_branch_protection(org_name, repo_name, synchronous = False):
+    ghclient = get_organization_client(org_name)
+    org = gh.Organization(ghclient, org_name)
+    repo = org.get_repository(repo_name)
+    settings = repo.get_organizer_settings()
+    if 'branches' not in settings:
+        return
+    for branch in settings['branches']:
+        if synchronous:
+            update_branch_protection(org_name, repo_name, branch)
+        else:
+            update_branch_protection.delay(org_name, repo_name, branch)
+
+
+@celery.task(max_retries=0)
+def update_branch_protection(org_name, repo_name, branch):
+    ghclient = get_organization_client(org_name)
+    org = gh.Organization(ghclient, org_name)
+    repo = org.get_repository(repo_name)
+    settings = repo.get_organizer_settings()
+    if 'branches' not in settings:
+        return
+    if branch not in settings['branches']:
+        return
+    print('Updating branch protection for %s in %s/%s.' % (branch, org_name, repo_name))
+    bsettings = settings['branches'][branch]
+
+    gh.branch_protection(
+        installation=ghclient.app,
+        repository=repo,
+        branch=branch,
+        required_status_checks=bsettings.get('required_status_checks', None),
+        enforce_admins=bsettings.get('enforce_admins', False),
+        required_pull_request_reviews=bsettings.get('required_pull_request_reviews', None),
+        restrictions=bsettings.get('restrictions', None),
+        )
 
 
 @celery.task(max_retries=0)
