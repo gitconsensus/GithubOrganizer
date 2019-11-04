@@ -124,7 +124,11 @@ class Organization:
                 config_repository = client.repository(org_name, '.github')
                 return yaml.safe_load(config_repository.file_contents('organizer.yaml').decoded.decode('utf-8'))
             except:
-                return False
+                try:
+                    config_repository = client.repository(org_name, '.organizer')
+                    return yaml.safe_load(config_repository.file_contents('organizer.yaml').decoded.decode('utf-8'))
+                except:
+                    return False
 
         self.client = client
         self.name = organization
