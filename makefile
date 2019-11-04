@@ -20,3 +20,7 @@ cleanenv:
 
 testenv: cleanenv
 	docker-compose up --build
+
+container_build:
+	docker build -f docker/dockerfile.worker -t github_organizer_worker:latest .
+	docker build -f docker/dockerfile.www -t github_organizer_www:latest .

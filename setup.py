@@ -48,7 +48,7 @@ setup(
     'github3apps.py>=0.1.3,<0.2',
     'pyjwt>=1.5.3,<2',
     'PyYAML>=5,<6',
-    'fastapi==0.38.1',
+    'fastapi>=0.42.0',
   ],
 
   extras_require={
