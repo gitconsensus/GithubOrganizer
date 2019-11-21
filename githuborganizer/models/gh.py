@@ -276,7 +276,7 @@ class Repository:
         current_labels = self.get_labels() #[x.name for x in self.ghrep.labels()]
 
         # Remove any labels not in the configuration
-        if 'labels_clean' in self.organization.configuration:
+        if self.organization.configuration.get('labels_clean', False):
             label_names = [x['name'] for x in self.organization.configuration.get('labels', [])]
             for active_label in self.ghrep.labels():
                 if active_label.name not in label_names:
