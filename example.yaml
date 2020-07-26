@@ -18,6 +18,7 @@ repositories:
       allow_squash_merge: true
       allow_merge_commit: true
       allow_rebase_merge: true
+    delete_branch_on_merge: true
     features:
       has_issues: true
       has_wiki: false
