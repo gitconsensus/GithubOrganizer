@@ -193,7 +193,7 @@ class Organization:
 class Repository:
 
     def __repr__(self):
-        return 'OrganizerRepository %s' % self.name
+        return 'OrganizerRepository %s/%s' % (self.organization.name, self.name)
 
     def __str__(self):
         return self.__repr__()
@@ -225,6 +225,34 @@ class Repository:
             allow_merge_commit = organizer_settings.get('merges', {}).get('allow_merge_commit', None),
             delete_branch_on_merge = organizer_settings.get('delete_branch_on_merge', None),
         )
+
+    def update_default_branch(self):
+        org_settings = self.get_organizer_settings()
+        if 'branches' not in org_settings:
+            return
+
+        # If this repo is a fork then leave it alone.
+        if self.ghrep.source:
+            return
+
+        for branch in org_settings['branches']:
+            settings = org_settings['branches'][branch]
+            if "default" not in settings:
+                continue
+            if not settings["default"]:
+                continue
+            if self.ghrep.default_branch == branch:
+                return
+
+            # Fails if branch exists, creates it from current default branch otherwise.
+            # Saves us at least one API call to see if the branch exists
+            try:
+                self.create_branch(branch)
+            except:
+                pass
+            return self.ghrep.edit(self.name, default_branch=branch)
+
+
 
     def get_labels(self):
         labels = {}
@@ -406,6 +434,10 @@ class Repository:
         if len(labels) > 0:
             return labels
         return False
+
+    def create_branch(self, branch_name):
+        current_default_branch = self.ghrep.branch(self.ghrep.default_branch)
+        self.ghrep.create_branch_ref(branch_name, current_default_branch.latest_sha())
 
 
 class Project:

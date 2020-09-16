@@ -25,7 +25,8 @@ repositories:
       has_projects: false
       has_downloads: false
     branches:
-      master:
+      main:
+        default: true
         enforce_admins: true
         required_pull_request_reviews: true
       prod:

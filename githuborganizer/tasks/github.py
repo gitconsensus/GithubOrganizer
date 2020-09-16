@@ -104,6 +104,14 @@ def update_branch_protection(org_name, repo_name, branch):
 
 
 @celery.task(max_retries=0)
+def update_repository_default_branch(org_name, repo_name):
+    ghclient = get_organization_client(org_name)
+    org = gh.Organization(ghclient, org_name)
+    repo = org.get_repository(repo_name)
+    repo.update_default_branch()
+
+
+@celery.task(max_retries=0)
 def update_repository_labels(org_name, repo_name):
     print('Updating the labels of repository %s/%s.' % (org_name, repo_name))
     ghclient = get_organization_client(org_name)
