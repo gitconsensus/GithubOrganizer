@@ -260,7 +260,20 @@ class Repository:
             labels[label.name] = label
         return labels
 
+
+    def get_topics(self):
+        topics = {}
+        return self.ghrep.topics().names
+
+
     def get_organizer_settings(self, name = False, maxdepth = 5):
+        topic_assignment = False
+        if self.organization.configuration.get("topics_for_assignment", False):
+            topics = self.get_topics()
+            topic_assignments = [x for x in topics if x.startswith("gho-")]
+            if len(topic_assignments) == 1:
+                topic_assignment = topic_assignments[0][4:]
+
         if not self.organization.configuration:
             return False
         elif 'repositories' not in self.organization.configuration:
@@ -281,7 +294,9 @@ class Repository:
             return settings
         elif name and name in self.organization.configuration['repositories']:
             settings = self.organization.configuration['repositories'][name]
-        elif self.name in self.organization.configuration['repositories']:
+        elif topic_assignment and topic_assignment in self.organization.configuration['repositories']:
+            settings = self.organization.configuration['repositories'][topic_assignment]
+        elif not name and self.name in self.organization.configuration['repositories']:
             settings = self.organization.configuration['repositories'][self.name]
         elif 'default' in self.organization.configuration['repositories']:
             settings = self.organization.configuration['repositories']['default']
