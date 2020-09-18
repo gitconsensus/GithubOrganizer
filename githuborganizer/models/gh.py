@@ -60,7 +60,14 @@ def branch_protection(
     required_status_checks = None,
     enforce_admins = False,
     required_pull_request_reviews = None,
-    restrictions = None):
+    restrictions = None,
+    required_linear_history = False,
+    allow_force_pushes = False,
+    allow_deletions = False,
+    required_approving_review_count = 1,
+    require_code_owner_reviews = False,
+    dismiss_stale_reviews = True
+    ):
 
     # required_status_checks
     # - strict - boolean
@@ -96,15 +103,33 @@ def branch_protection(
             if field not in restrictions:
                 restrictions[field] = []
 
+    if required_pull_request_reviews:
+        required_pull_request_reviews_payload = {
+            'dismissal_restrictions': {'users':[], 'teams': []},
+            'dismiss_stale_reviews': dismiss_stale_reviews,
+            'require_code_owner_reviews': require_code_owner_reviews,
+            'required_approving_review_count': required_approving_review_count
+        }
+    else:
+        required_pull_request_reviews_payload = None
+
+    request_payload = {
+        'required_status_checks': required_status_checks,
+        'enforce_admins': enforce_admins,
+        'required_pull_request_reviews': required_pull_request_reviews_payload,
+        'restrictions': restrictions,
+        'required_linear_history': required_linear_history,
+        'allow_force_pushes': allow_force_pushes,
+        'allow_deletions': allow_deletions
+    }
+
+
+    print(json.dumps(request_payload))
+
     results = installation.rest(
         'put',
         'repos/%s/%s/branches/%s/protection' % (repository.organization.name, repository.name, branch),
-        payload={
-            'required_status_checks': required_status_checks,
-            'enforce_admins': enforce_admins,
-            'required_pull_request_reviews': required_pull_request_reviews,
-            'restrictions': restrictions
-        },
+        payload=request_payload,
         accepts=['application/vnd.github.luke-cage-preview+json']
     )
 

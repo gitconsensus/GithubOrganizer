@@ -100,6 +100,12 @@ def update_branch_protection(org_name, repo_name, branch):
         enforce_admins=bsettings.get('enforce_admins', False),
         required_pull_request_reviews=bsettings.get('required_pull_request_reviews', None),
         restrictions=bsettings.get('restrictions', None),
+        required_linear_history=bsettings.get('required_linear_history', False),
+        allow_force_pushes=bsettings.get('allow_force_pushes', False),
+        allow_deletions=bsettings.get('allow_deletions', False),
+        required_approving_review_count=bsettings.get('restrictions', 1),
+        require_code_owner_reviews=bsettings.get('require_code_owner_reviews',False),
+        dismiss_stale_reviews=bsettings.get('dismiss_stale_reviews', True)
         )
 
 
