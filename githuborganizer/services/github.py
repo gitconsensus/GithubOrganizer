@@ -65,7 +65,7 @@ class GithubOrganizerAppInstall(GithubAppInstall):
         next = get_next(r)
         if next:
             results = r.json()
-            results.append(self.rest('get', url=url, accepts=accepts))
+            results.append(self.rest('get', url=next, accepts=accepts))
             return results
 
         return r.json()
