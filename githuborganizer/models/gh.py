@@ -293,7 +293,7 @@ class Repository:
 
     def get_organizer_settings(self, name = False, maxdepth = 5):
         topic_assignment = False
-        if self.organization.configuration.get("topics_for_assignment", False):
+        if self.organization.configuration.get("topics_for_assignment", True):
             topics = self.get_topics()
             topic_assignments = [x for x in topics if x.startswith("gho-")]
             if len(topic_assignments) == 1:
