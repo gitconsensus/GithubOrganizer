@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from typing import Dict, Any
 from starlette.requests import Request
 import githuborganizer.tasks.github as tasks
+import os
 
 app = FastAPI()
 
@@ -14,9 +15,12 @@ def github_webhook(data: Dict[str, Any], request: Request):
     else:
         event = request.headers.get('X-GitHub-Event', False)
 
-
     if not event:
         return 'No event detected.'
+
+    if os.environ.get('VALIDATE_WEBHOOKS', False):
+        if not validate_signature(await request.body(), request.headers.get('X-Hub-Signature', False)):
+            return 'Invalid Signature'
 
     if event == 'issues':
         return issue_payload(data)
@@ -32,6 +36,29 @@ def github_webhook(data: Dict[str, Any], request: Request):
 
     return 'No relevant events.'
 
+
+def validate_signature(data, header_signature):
+    # Enforce secret
+    secret = os.environ.get('GITHUB_WEBHOOK_SECRET', False)
+    if not secret:
+        return True
+
+    # Only SHA1 is supported
+    header_signature = request.headers.get('X-Hub-Signature')
+    if not header_signature:
+        abort(403)
+
+    sha_name, signature = header_signature.split('=')
+    if sha_name != 'sha1':
+        return False
+
+    # HMAC requires the key to be bytes, but data is string
+    mac = hmac.new(str(secret), msg=request.data, digestmod='sha1')
+
+    if not hmac.compare_digest(str(mac.hexdigest()), str(signature)):
+        return False
+
+    return True
 
 
 def issue_payload(payload):
