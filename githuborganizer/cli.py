@@ -3,6 +3,7 @@ import github3
 import models.gh
 import tasks.github
 from githuborganizer.services.github import ghapp, get_organization_client
+import githuborganizer.tasks.github as tasks
 import random
 import string
 import os
