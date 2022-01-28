@@ -62,8 +62,8 @@ def installation_payload(payload):
     install_id = payload['installation']['id']
     install = ghapp.get_installation(install_id)
     organization = install.get_organization()
+    tasks.update_team_members.delay(organization)
     tasks.update_organization_settings.delay(organization)
-    tasks.update_organization_teams.delay(organization)
     return 'Processing organization %s.' % organization
 
 
