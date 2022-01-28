@@ -13,9 +13,11 @@ def process_installs(synchronous = False):
         if synchronous:
             update_organization_settings(organization)
             update_organization_teams(organization)
+            update_organization_team_members(organization)
         else:
             update_organization_settings.delay(organization)
             update_organization_teams.delay(organization)
+            update_organization_team_members.delay(organization)
 
 
 @celery.task(max_retries=0)
