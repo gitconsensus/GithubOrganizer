@@ -248,7 +248,7 @@ class Repository:
             allow_rebase_merge = organizer_settings.get('merges', {}).get('allow_rebase_merge', None),
             allow_squash_merge = organizer_settings.get('merges', {}).get('allow_squash_merge', None),
             allow_merge_commit = organizer_settings.get('merges', {}).get('allow_merge_commit', None),
-            #delete_branch_on_merge = organizer_settings.get('delete_branch_on_merge', None),
+            delete_branch_on_merge = organizer_settings.get('merges', {}).get('delete_branch_on_merge', None)
         )
 
     def update_default_branch(self):
