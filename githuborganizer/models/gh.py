@@ -248,7 +248,7 @@ class Repository:
             allow_rebase_merge = organizer_settings.get('merges', {}).get('allow_rebase_merge', None),
             allow_squash_merge = organizer_settings.get('merges', {}).get('allow_squash_merge', None),
             allow_merge_commit = organizer_settings.get('merges', {}).get('allow_merge_commit', None),
-            delete_branch_on_merge = organizer_settings.get('merges', {}).get('delete_branch_on_merge', None)
+            delete_branch_on_merge = organizer_settings.get('delete_branch_on_merge', None)
         )
 
     def update_default_branch(self):
@@ -312,7 +312,7 @@ class Repository:
                 if feature in settings:
                     settings['features'][feature] = settings[feature]
                     del settings[feature]
-            for merge in ['allow_rebase_merge', 'allow_squash_merge', 'allow_merge_commit', 'delete_branch_on_merge']:
+            for merge in ['allow_rebase_merge', 'allow_squash_merge', 'allow_merge_commit']:
                 if merge in settings:
                     settings['merges'][merge] = settings[merge]
                     del settings[merge]
