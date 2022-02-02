@@ -312,7 +312,7 @@ class Repository:
                 if feature in settings:
                     settings['features'][feature] = settings[feature]
                     del settings[feature]
-            for merge in ['allow_rebase_merge', 'allow_squash_merge', 'allow_merge_commit']:
+            for merge in ['allow_rebase_merge', 'allow_squash_merge', 'allow_merge_commit', 'delete_branch_on_merge']:
                 if merge in settings:
                     settings['merges'][merge] = settings[merge]
                     del settings[merge]
