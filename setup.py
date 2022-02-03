@@ -44,11 +44,11 @@ setup(
     'celery>=4.1,<5',
     'click>=7.0,<8.0',
     'cryptography>=2.1.4,<3',
-    'github3.py>=1,<2',
-    'github3apps.py>=0.2.0,<0.3',
+    'github3.py>=1.3.0,<2',
+    'github3apps.py>=0.2.2,<0.3',
     'pyjwt>=1.5.3,<2',
-    'PyYAML>=5,<6',
-    'fastapi>=0.42.0',
+    'PyYAML>=6.0,<7',
+    'fastapi>=0.73.0',
   ],
 
   extras_require={

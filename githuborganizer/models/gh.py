@@ -308,6 +308,8 @@ class Repository:
             settings['features'] = {}
             if 'labels' in settings:
                 del settings['labels']
+            elif 'delete_branch_on_merge' in settings:
+                del settings['delete_branch_on_merge']
             for feature in ['has_issues', 'has_wiki', 'has_downloads', 'has_projects']:
                 if feature in settings:
                     settings['features'][feature] = settings[feature]
