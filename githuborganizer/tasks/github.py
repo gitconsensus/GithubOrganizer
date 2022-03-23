@@ -1,6 +1,6 @@
-from githuborganizer import celery
 import githuborganizer.models.gh as gh
-from githuborganizer.services.github import ghapp, get_organization_client
+from githuborganizer import celery
+from githuborganizer.services.github import get_organization_client, ghapp
 
 
 @celery.task(rate_limit='4/h', max_retries=0)
@@ -13,9 +13,11 @@ def process_installs(synchronous = False):
         if synchronous:
             update_organization_settings(organization)
             update_organization_teams(organization)
+            update_organization_team_members(organization)
         else:
             update_organization_settings.delay(organization)
             update_organization_teams.delay(organization)
+            update_organization_team_members.delay(organization)
 
 
 @celery.task(max_retries=0)

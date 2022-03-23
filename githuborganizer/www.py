@@ -1,7 +1,10 @@
+from typing import Any, Dict
+
 from fastapi import FastAPI
-from typing import Dict, Any
 from starlette.requests import Request
+
 import githuborganizer.tasks.github as tasks
+from githuborganizer.services.github import ghapp
 
 app = FastAPI()
 
@@ -61,7 +64,9 @@ def installation_payload(payload):
     install_id = payload['installation']['id']
     install = ghapp.get_installation(install_id)
     organization = install.get_organization()
-    update_organization_settings.delay(organization)
+    tasks.update_organization_settings.delay(organization)
+    tasks.update_organization_teams.delay(organization)
+    tasks.update_organization_team_members.delay(organization)
     return 'Processing organization %s.' % organization
 
 
